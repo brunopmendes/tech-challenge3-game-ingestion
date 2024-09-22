@@ -1,0 +1,6 @@
+*__pycache__
+*.terraform
+app/kaggle*
+*.tfstate
+*.backup
+*.hcl
