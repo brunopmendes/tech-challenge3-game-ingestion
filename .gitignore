@@ -4,4 +4,7 @@ app/kaggle
 *.tfstate
 *.backup
 *.hcl
-out/
+out/*
+libs/
+
+!out/libs.zip
