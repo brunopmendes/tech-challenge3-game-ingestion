@@ -9,7 +9,7 @@ resource "aws_lambda_function" "lambda_game_ingestion" {
   description   = "Lambda captura mensalmente dataset do kaggle de recomendação de jogos"
 
   handler = "lambda_handler.lambda_handler"
-  runtime = "python3.12"
+  runtime = "python3.9"
 
   source_code_hash = filebase64sha256(data.archive_file.lambda_my_function.output_path) #hash para capturar qualquer alteracao na lambda
 
@@ -18,6 +18,13 @@ resource "aws_lambda_function" "lambda_game_ingestion" {
       S3_BUCKET   = "raw-data-game-recommendations"
       SECRET_NAME = "kaggle-api-secrets"
     }
+  }
+
+  layers      = [aws_lambda_layer_version.lambda_layer.arn]
+  timeout     = 180
+  memory_size = 4096
+  ephemeral_storage {
+    size = 4096
   }
 }
 
@@ -41,12 +48,14 @@ resource "aws_lambda_permission" "allow_eventbridge_to_invoke_lambda" {
   source_arn    = aws_cloudwatch_event_rule.monthly_trigger_rule.arn
 }
 
-# LAMBDA LAYER - 
+# LAMBDA LAYER - KAGGLE
 resource "aws_lambda_layer_version" "lambda_layer" {
-  filename   = data.archive_file.lambda_my_function.output_path
+  filename   = "${path.module}/../out/libs.zip"
   layer_name = "kaggle_layer"
 
-  compatible_runtimes = ["python12"]
+  compatible_runtimes = ["python3.9"]
+
+  source_code_hash = filebase64sha256("${path.module}/../out/libs.zip")
 }
 
 
@@ -59,9 +68,9 @@ data "archive_file" "lambda_my_function" {
 }
 
 # CRIA ZIP PARA LIB KAGGLE
-data "archive_file" "lambda_my_function" {
-  type             = "zip"
-  source_dir       = "${path.module}/../libs/"
-  output_file_mode = "0666"
-  output_path      = "${path.module}/../out/libs.zip"
-}
+# data "archive_file" "lambda_my_layer" {
+#   type             = "zip"
+#   source_dir       = "${path.module}/../libs/"
+#   output_file_mode = "0666"
+#   output_path      = "${path.module}/../out/libs.zip"
+# }
