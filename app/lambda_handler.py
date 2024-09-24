@@ -3,7 +3,10 @@ from datetime import datetime
 
 from utils.s3_utils import S3Ingestion
 from utils.secrets_manager import SecretsManager
-from kaggle.kaggle.api.kaggle_api_extended import KaggleApi
+
+from kaggle.api.kaggle_api_extended import KaggleApi
+from kaggle.api_client import ApiClient
+from kaggle.configuration import Configuration
 
 
 S3_BUCKET = os.environ.get('S3_BUCKET')
@@ -16,34 +19,25 @@ def lambda_handler(event, context):
 
     # obter segredos do secrets manager
     kaggle_username, kaggle_key = secrets_manager.get_secrets_values(SECRET_NAME)
-    # print(SECRET_NAME)
-    # teste = secrets_manager.get_secrets_values(SECRET_NAME)
-    print("teste: ",kaggle_username, kaggle_key) 
-
-    #definir credenciais como variaveis de ambiente
-    os.environ['KAGGLE_USERNAME'] = kaggle_username
-    os.environ['KAGGLE_KEY'] = kaggle_key
 
     # autenticar usando API do kaggle
-    api = KaggleApi()
-    api.authenticate()
+    config = Configuration(kaggle_username, kaggle_key)
+    api = KaggleApi(ApiClient(config))
 
     # definir caminho para arquivo temp na lambda
     date = datetime.now().strftime('%Y-%m')
-    dataset_path = f'/tmp/{KAGGLE_DATASET}/{date}.zip'
 
     # baixar dataset do kaggle
     api.dataset_download_files(KAGGLE_DATASET, path='/tmp', unzip=True)
 
-    # renomear arquivo descompactado
-    os.rename(f'/tmp/{KAGGLE_DATASET}.csv', dataset_path)
 
-    # fazer upload para o s3
     s3_bucket = os.environ.get('S3_BUCKET')
-    s3_key = f'kaggle_datasets/{KAGGLE_DATASET}/{date}.csb'
-
     s3_ingestion = S3Ingestion()
-    s3_ingestion(dataset_path, s3_bucket, s3_key)
+
+    for file in os.listdir('/tmp'):
+        # fazer upload para o s3
+        s3_key = f'anoMes={date}/{file}'
+        s3_ingestion.s3_upload_file(f'/tmp/{file}', s3_bucket, s3_key)
 
     return {
         'statusCode': 200,
