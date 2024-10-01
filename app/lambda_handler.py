@@ -24,7 +24,6 @@ def lambda_handler(event, context):
     config = Configuration(kaggle_username, kaggle_key)
     api = KaggleApi(ApiClient(config))
 
-    # definir caminho para arquivo temp na lambda
     date = datetime.now().strftime('%Y-%m')
 
     # baixar dataset do kaggle
