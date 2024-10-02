@@ -16,5 +16,5 @@ class SecretsManager():
             secret = json.loads(secret_response['SecretString'])
             return secret['KAGGLE_USERNAME'], secret['KAGGLE_KEY']
         except Exception as e:
-            print(f'Erro ao recuperar o segrego {secret_name}, erro: {e}')
+            print(f'Erro ao recuperar o segredo {secret_name}, erro: {e}')
             raise e

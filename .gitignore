@@ -6,5 +6,8 @@ app/kaggle
 *.hcl
 out/*
 libs/
+.env
 
 !out/libs.zip
+models
+data
